@@ -1,0 +1,4 @@
+name: SkyDef
+version: 1.0
+main: com.mguhc.SkyDef
+api-version: 1.8
