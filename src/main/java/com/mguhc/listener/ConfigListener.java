@@ -2,10 +2,6 @@ package com.mguhc.listener;
 
 import com.mguhc.SkyDef;
 import com.mguhc.manager.*;
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
-import net.luckperms.api.model.user.User;
-import net.luckperms.api.node.Node;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -30,7 +26,7 @@ public class ConfigListener implements Listener {
     private final TeamManager teamManager;
     private final GameManager gameManager;
     private final PlayerManager playerManager; // Ajout de PlayerManager
-    private final LuckPerms luckPerms;
+    private final PermissionManager permissionManager;
 
     private final Map<Player, String> captainInputState = new HashMap<>();
 
@@ -39,14 +35,14 @@ public class ConfigListener implements Listener {
         teamManager = skyDef.getTeamManager();
         gameManager = skyDef.getGameManager();
         playerManager = skyDef.getPlayerManager(); // Initialisation de PlayerManager
-        luckPerms = LuckPermsProvider.get();
+        permissionManager = skyDef.getPermissionManager();
     }
 
     @EventHandler
     private void OnJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (gameManager.getState().equals(StateEnum.Waiting)) {
-            if (player.hasPermission("skydef.host")) {
+            if (permissionManager.hasPermission(player, "skydef.host") || player.isOp()) {
                 player.getInventory().addItem(getConfigItem());
             }
             player.getInventory().addItem(getTeamItem());
@@ -189,7 +185,7 @@ public class ConfigListener implements Listener {
                 meta.setDisplayName(onlinePlayer.getName()); // Nom du joueur
                 List<String> lore = new ArrayList<>();
                 // Vérifier si le joueur a déjà la permission
-                if (onlinePlayer.hasPermission("skydef.host")) {
+                if (permissionManager.hasPermission(onlinePlayer, "skydef.host")) {
                     lore.add(ChatColor.RED + "Déjà Host");
                 } else {
                     lore.add(ChatColor.GREEN + "Cliquez pour donner le statut de Host");
@@ -218,7 +214,7 @@ public class ConfigListener implements Listener {
                 meta.setDisplayName(onlinePlayer.getName()); // Nom du joueur
                 List<String> lore = new ArrayList<>();
                 // Vérifier si le joueur a déjà la permission
-                if (onlinePlayer.hasPermission("skydef.host")) {
+                if (permissionManager.hasPermission(onlinePlayer, "skydef.host")) {
                     lore.add(ChatColor.RED + "Déjà Mod");
                 } else {
                     lore.add(ChatColor.GREEN + "Cliquez pour donner le statut de Mod");
@@ -272,30 +268,22 @@ public class ConfigListener implements Listener {
                 Player selectedPlayer = Bukkit.getPlayer(playerName);
 
                 if (selectedPlayer != null) {
-                    User user = luckPerms.getUserManager().getUser (selectedPlayer.getUniqueId());
-                    if (selectedPlayer.hasPermission("skydef.host")) {
+                    if (permissionManager.hasPermission(selectedPlayer, "skydef.host")) {
                         // Retirer la permission api.mod
-                        assert user != null;
-                        user.data().remove(Node.builder("skydef.host").build());
-                        luckPerms.getUserManager().saveUser (user); // Sauvegarder l'utilisateur
+                        permissionManager.removePermission(selectedPlayer, "skydef.host");
 
                         player.sendMessage(ChatColor.RED + selectedPlayer.getName() + " n'est plus Host.");
                         selectedPlayer.sendMessage(ChatColor.RED + "Vous avez été retiré du statut de Host.");
 
                     } else {
-                        if (user != null) {
-                            // Ajouter la permission api.host
-                            user.data().add(Node.builder("skydef.host").build());
-                            luckPerms.getUserManager().saveUser (user); // Sauvegarder l'utilisateur
+                        // Ajouter la permission api.host
+                        permissionManager.addPermission(selectedPlayer, "skydef.host");
 
-                            player.sendMessage(ChatColor.GREEN + selectedPlayer.getName() + " a maintenant le statut de Host.");
-                            selectedPlayer.sendMessage(ChatColor.GREEN + "Vous avez été promu au statut de Host.");
+                        player.sendMessage(ChatColor.GREEN + selectedPlayer.getName() + " a maintenant le statut de Host.");
+                        selectedPlayer.sendMessage(ChatColor.GREEN + "Vous avez été promu au statut de Host.");
 
-                            selectedPlayer.getInventory().addItem(getConfigItem()); // Donner l'étoile du Nether au joueur
-                            selectedPlayer.updateInventory();
-                        } else {
-                            player.sendMessage(ChatColor.RED + "Erreur : Impossible de récupérer les données de permission pour " + selectedPlayer.getName());
-                        }
+                        selectedPlayer.getInventory().addItem(getConfigItem()); // Donner l'étoile du Nether au joueur
+                        selectedPlayer.updateInventory();
                     }
                 }
             }
@@ -316,28 +304,20 @@ public class ConfigListener implements Listener {
                 Player selectedPlayer = Bukkit.getPlayer(playerName);
 
                 if (selectedPlayer != null) {
-                    User user = luckPerms.getUserManager().getUser (selectedPlayer.getUniqueId());
-                    if (selectedPlayer.hasPermission("skydef.mod")) {
+                    if (permissionManager.hasPermission(selectedPlayer, "skydef.mod")) {
                         // Retirer la permission blb.mod
-                        assert user != null;
-                        user.data().remove(Node.builder("skydef.mod").build());
-                        luckPerms.getUserManager().saveUser (user); // Sauvegarder l'utilisateur
+                        permissionManager.removePermission(selectedPlayer, "skydef.mod");
 
                         player.sendMessage(ChatColor.RED + selectedPlayer.getName() + " n'est plus Mod.");
                         selectedPlayer.sendMessage(ChatColor.RED + "Vous avez été retiré du statut de Mod.");
                         playerManager.addPlayer(selectedPlayer);
                     } else {
-                        if (user != null) {
-                            // Ajouter la permission blb.mod
-                            user.data().add(Node.builder("skydef.mod").build());
-                            luckPerms.getUserManager().saveUser (user); // Sauvegarder l'utilisateur
+                        // Ajouter la permission blb.mod
+                        permissionManager.addPermission(selectedPlayer, "skydef.mod");
 
-                            player.sendMessage(ChatColor.GREEN + selectedPlayer.getName() + " a maintenant le statut de Mod.");
-                            selectedPlayer.sendMessage(ChatColor.GREEN + "Vous avez été promu au statut de Mod.");
-                            playerManager.removePlayer(selectedPlayer);
-                        } else {
-                            player.sendMessage(ChatColor.RED + "Erreur : Impossible de récupérer les données de permission pour " + selectedPlayer.getName());
-                        }
+                        player.sendMessage(ChatColor.GREEN + selectedPlayer.getName() + " a maintenant le statut de Mod.");
+                        selectedPlayer.sendMessage(ChatColor.GREEN + "Vous avez été promu au statut de Mod.");
+                        playerManager.removePlayer(selectedPlayer);
                     }
                 }
             }

@@ -16,9 +16,6 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.ietf.jgss.Oid;
-
-import javax.swing.plaf.PanelUI;
 
 public class SkyDef extends JavaPlugin implements Listener {
 
@@ -32,12 +29,14 @@ public class SkyDef extends JavaPlugin implements Listener {
     private BannerLock demonBanner;
 
     private final Location center = new Location(Bukkit.getWorld("world"), 0, 151, 0);
+    private PermissionManager permissionManager;
 
     public void onEnable() {
         instance = this;
         teamManager = new TeamManager();
         playerManager = new PlayerManager();
         effectManager = new EffectManager();
+        permissionManager = new PermissionManager();
         gameManager = new GameManager();
         angeBanner = new BannerLock(new Location(Bukkit.getWorld("world"), -299, 212, 374), 4*60, "§9Anges");
         demonBanner = new BannerLock(new Location(Bukkit.getWorld("world"), 599, 174, -770), 4*60, "§cDémons");
@@ -110,6 +109,10 @@ public class SkyDef extends JavaPlugin implements Listener {
 
     public PlayerManager getPlayerManager() {
         return playerManager;
+    }
+
+    public PermissionManager getPermissionManager() {
+        return permissionManager;
     }
 
     public static SkyDef getInstance() {
