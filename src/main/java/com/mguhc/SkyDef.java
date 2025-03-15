@@ -3,19 +3,13 @@ package com.mguhc;
 import com.mguhc.banner.BannerLock;
 import com.mguhc.listener.*;
 import com.mguhc.manager.*;
-import com.mguhc.scoreboard.SkyDefScoreboard;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
 public class SkyDef extends JavaPlugin implements Listener {
 
@@ -24,18 +18,14 @@ public class SkyDef extends JavaPlugin implements Listener {
     private GameManager gameManager;
     private PlayerManager playerManager;
     private DayManager dayManager;
-    private EffectManager effectManager;
     private BannerLock angeBanner;
     private BannerLock demonBanner;
-
-    private final Location center = new Location(Bukkit.getWorld("world"), 0, 151, 0);
     private PermissionManager permissionManager;
 
     public void onEnable() {
         instance = this;
         teamManager = new TeamManager();
         playerManager = new PlayerManager();
-        effectManager = new EffectManager();
         permissionManager = new PermissionManager();
         gameManager = new GameManager();
         angeBanner = new BannerLock(new Location(Bukkit.getWorld("world"), -299, 212, 374), 4*60, "§9Anges");
@@ -57,43 +47,9 @@ public class SkyDef extends JavaPlugin implements Listener {
         pluginManager.registerEvents(dayManager, this);
     }
 
-    @EventHandler
-    private void OnJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        SkyDefScoreboard skyDefScoreboard = new SkyDefScoreboard();
-        skyDefScoreboard.createScoreboard(player);
-        if (gameManager.getState().equals(StateEnum.Waiting)) {
-            player.teleport(center);
-            clearAll(player);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 255));
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, Integer.MAX_VALUE, 255));
-            if (!playerManager.getPlayers().contains(player)) {
-                playerManager.addPlayer(player);
-            }
-        }
-    }
-
-    @EventHandler
-    private void OnQuit(PlayerQuitEvent event) {
-        if (playerManager.getPlayers().contains(event.getPlayer()) && gameManager.getState().equals(StateEnum.Waiting)) {
-            playerManager.removePlayer(event.getPlayer());
-        }
-    }
-
-    @EventHandler
-    private void OnMove(PlayerMoveEvent event) {
-        if (gameManager.getState().equals(StateEnum.Waiting)) {
-            Player player = event.getPlayer();
-            if (player.getLocation().getY() < 100) {
-                player.teleport(center);
-            }
-        }
-    }
-
-    public void clearAll(Player player) {
+    public static void clearAll(Player player) {
         player.getInventory().clear();
         player.getInventory().setArmorContents(null);
-        effectManager.removeEffects(player);
         for (PotionEffect potionEffect : player.getActivePotionEffects()) {
             player.removePotionEffect(potionEffect.getType());
         }

@@ -2,19 +2,21 @@ package com.mguhc.listener;
 
 import com.mguhc.SkyDef;
 import com.mguhc.manager.*;
+import com.mguhc.scoreboard.SkyDefScoreboard;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.PlayerChatEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,8 +27,10 @@ public class ConfigListener implements Listener {
 
     private final TeamManager teamManager;
     private final GameManager gameManager;
-    private final PlayerManager playerManager; // Ajout de PlayerManager
+    private final PlayerManager playerManager;
     private final PermissionManager permissionManager;
+
+    private final Location center = new Location(Bukkit.getWorld("world"), 0, 151, 0);
 
     private final Map<Player, String> captainInputState = new HashMap<>();
 
@@ -34,18 +38,45 @@ public class ConfigListener implements Listener {
         SkyDef skyDef = SkyDef.getInstance();
         teamManager = skyDef.getTeamManager();
         gameManager = skyDef.getGameManager();
-        playerManager = skyDef.getPlayerManager(); // Initialisation de PlayerManager
+        playerManager = skyDef.getPlayerManager();
         permissionManager = skyDef.getPermissionManager();
     }
 
     @EventHandler
     private void OnJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (gameManager.getState().equals(StateEnum.Waiting)) {
+        if (gameManager.getState() == StateEnum.Waiting) {
+            player.teleport(center);
+            SkyDef.clearAll(player);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 255));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, Integer.MAX_VALUE, 255));
+            if (!playerManager.getPlayers().contains(player)) {
+                playerManager.addPlayer(player);
+            }
+
             if (permissionManager.hasPermission(player, "skydef.host") || player.isOp()) {
                 player.getInventory().addItem(getConfigItem());
             }
             player.getInventory().addItem(getTeamItem());
+        }
+        SkyDefScoreboard skyDefScoreboard = new SkyDefScoreboard();
+        skyDefScoreboard.createScoreboard(player);
+    }
+
+    @EventHandler
+    private void OnQuit(PlayerQuitEvent event) {
+        if (playerManager.getPlayers().contains(event.getPlayer()) && gameManager.getState().equals(StateEnum.Waiting)) {
+            playerManager.removePlayer(event.getPlayer());
+        }
+    }
+
+    @EventHandler
+    private void OnMove(PlayerMoveEvent event) {
+        if (gameManager.getState().equals(StateEnum.Waiting)) {
+            Player player = event.getPlayer();
+            if (player.getLocation().getY() < 100) {
+                player.teleport(center);
+            }
         }
     }
 
@@ -68,7 +99,7 @@ public class ConfigListener implements Listener {
         ItemStack modItem = new ItemStack(Material.DIAMOND_SWORD);
         ItemMeta modMeta = modItem.getItemMeta();
         if (modMeta != null) {
-            modMeta.setDisplayName(ChatColor.GREEN + "Mod");
+            modMeta.setDisplayName(ChatColor.GREEN + "§lMod");
             modItem.setItemMeta(modMeta);
         }
         configInventory.setItem(0, modItem); // Placer l'épée en diamant en slot 0
@@ -77,7 +108,7 @@ public class ConfigListener implements Listener {
         ItemStack startGameItem = new ItemStack(Material.WOOL, 1, (short) 5); // 5 pour la couleur verte
         ItemMeta startGameMeta = startGameItem.getItemMeta();
         if (startGameMeta != null) {
-            startGameMeta.setDisplayName(ChatColor.GREEN + "Lancer la partie");
+            startGameMeta.setDisplayName(ChatColor.GREEN + "§lLancer la partie");
             startGameItem.setItemMeta(startGameMeta);
         }
         configInventory.setItem(4, startGameItem); // Placer au centre
@@ -86,7 +117,7 @@ public class ConfigListener implements Listener {
         ItemStack hostItem = new ItemStack(Material.ANVIL);
         ItemMeta hostMeta = hostItem.getItemMeta();
         if (hostMeta != null) {
-            hostMeta.setDisplayName(ChatColor.BLUE + "Host");
+            hostMeta.setDisplayName(ChatColor.BLUE + "§lHost");
             hostItem.setItemMeta(hostMeta);
         }
         configInventory.setItem(8, hostItem); // Placer en bas à droite
@@ -95,7 +126,7 @@ public class ConfigListener implements Listener {
         ItemStack captainItem = new ItemStack(Material.DIAMOND_HELMET);
         ItemMeta captainMeta = captainItem.getItemMeta();
         if (captainMeta != null) {
-            captainMeta.setDisplayName("§6Capitaine");
+            captainMeta.setDisplayName("§6§lCapitaine");
             captainItem.setItemMeta(captainMeta);
         }
         configInventory.setItem(3, captainItem);
@@ -110,7 +141,7 @@ public class ConfigListener implements Listener {
         ItemStack redTeamItem = new ItemStack(Material.WOOL, 1, (short) 14); // 14 pour la couleur rouge
         ItemMeta redMeta = redTeamItem.getItemMeta();
         if (redMeta != null) {
-            redMeta.setDisplayName(ChatColor.RED + "Équipe Demon");
+            redMeta.setDisplayName(ChatColor.RED + "§lÉquipe Demon");
             redTeamItem.setItemMeta(redMeta);
         }
         teamInventory.setItem(3, redTeamItem); // Placer à la position 3
@@ -119,7 +150,7 @@ public class ConfigListener implements Listener {
         ItemStack blueTeamItem = new ItemStack(Material.WOOL, 1, (short) 11); // 11 pour la couleur bleue
         ItemMeta blueMeta = blueTeamItem.getItemMeta();
         if (blueMeta != null) {
-            blueMeta.setDisplayName(ChatColor.BLUE + "Équipe Ange");
+            blueMeta.setDisplayName(ChatColor.BLUE + "§lÉquipe Ange");
             blueTeamItem.setItemMeta(blueMeta);
         }
         teamInventory.setItem(5, blueTeamItem); // Placer à la position 5
@@ -237,7 +268,7 @@ public class ConfigListener implements Listener {
         ItemStack redTeamItem = new ItemStack(Material.WOOL, 1, (short) 14); // 14 pour la couleur rouge
         ItemMeta redMeta = redTeamItem.getItemMeta();
         if (redMeta != null) {
-            redMeta.setDisplayName(ChatColor.RED + "Équipe Demon");
+            redMeta.setDisplayName(ChatColor.RED + "§lÉquipe Demon");
             redTeamItem.setItemMeta(redMeta);
         }
         inventory.setItem(3, redTeamItem); // Placer à la position 3
@@ -246,7 +277,7 @@ public class ConfigListener implements Listener {
         ItemStack blueTeamItem = new ItemStack(Material.WOOL, 1, (short) 11); // 11 pour la couleur bleue
         ItemMeta blueMeta = blueTeamItem.getItemMeta();
         if (blueMeta != null) {
-            blueMeta.setDisplayName(ChatColor.BLUE + "Équipe Ange");
+            blueMeta.setDisplayName(ChatColor.BLUE + "§lÉquipe Ange");
             blueTeamItem.setItemMeta(blueMeta);
         }
         inventory.setItem(5, blueTeamItem); // Placer à la position 5
@@ -382,7 +413,7 @@ public class ConfigListener implements Listener {
         ItemStack item = new ItemStack(Material.NETHER_STAR);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.RED + "Config");
+            meta.setDisplayName(ChatColor.RED + "§lConfig");
             item.setItemMeta(meta);
         }
         return item;
@@ -392,7 +423,7 @@ public class ConfigListener implements Listener {
         ItemStack item = new ItemStack(Material.BANNER);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(ChatColor.RED + "Choisir son équipe");
+            meta.setDisplayName(ChatColor.RED + "§lChoisir son équipe");
             item.setItemMeta(meta);
         }
         return item;

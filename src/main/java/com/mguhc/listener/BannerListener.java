@@ -74,10 +74,10 @@ public class BannerListener implements Listener {
         Player player = event.getEntity().getPlayer();
         TeamManager teamManager = SkyDef.getInstance().getTeamManager();
         if (teamManager.getTeam(player).equals(TeamEnum.Ange)) {
-            demonBanner.removeFromTimer(30);
+            angeBanner.removeFromTimer(30);
         }
         if (teamManager.getTeam(player).equals(TeamEnum.Demon)) {
-            angeBanner.removeFromTimer(30);
+            demonBanner.removeFromTimer(30);
         }
     }
 }

@@ -21,6 +21,9 @@ public class GameManager {
             }
             demon.setGameMode(GameMode.SURVIVAL);
             demon.setMaxHealth(40);
+            if (demon.equals(teamManager.getCaptain(TeamEnum.Demon))) {
+                demon.setMaxHealth(50);
+            }
             demon.setFoodLevel(20);
             demon.setHealth(demon.getMaxHealth());
             demon.getInventory().clear();
@@ -32,6 +35,9 @@ public class GameManager {
             }
             ange.setGameMode(GameMode.SURVIVAL);
             ange.setMaxHealth(40);
+            if (ange.equals(teamManager.getCaptain(TeamEnum.Ange))) {
+                ange.setMaxHealth(50);
+            }
             ange.setFoodLevel(20);
             ange.setHealth(ange.getMaxHealth());
             ange.getInventory().clear();

@@ -31,27 +31,50 @@ public class TpListener implements Listener {
 
         // Téléportation pour l'équipe Ange
         if (team.equals(TeamEnum.Ange)) {
-            if (isSameLocation(player.getLocation(), AngeDownTpLocation)) {
+            if (isInCube(player.getLocation(),
+                    AngeDownTpLocation.getBlockX() - 1,
+                    AngeDownTpLocation.getBlockZ() - 1,
+                    AngeDownTpLocation.getBlockX() + 1,
+                    AngeDownTpLocation.getBlockZ() + 1)) {
                 player.teleport(AngeHightTpLocation.add(0, 1, 2));
-            } else if (isSameLocation(player.getLocation(), AngeHightTpLocation)) {
+            } else if (isInCube(player.getLocation(),
+                    AngeHightTpLocation.getBlockX() - 1,
+                    AngeHightTpLocation.getBlockZ() - 1,
+                    AngeHightTpLocation.getBlockX() + 1,
+                    AngeHightTpLocation.getBlockZ() + 1)) {
                 player.teleport(AngeDownTpLocation.add(0, 1, 2));
             }
         }
         // Téléportation pour l'équipe Demon
         else if (team.equals(TeamEnum.Demon)) {
-            if (isSameLocation(player.getLocation(), DemonDownTpLocation)) {
+            if (isInCube(player.getLocation(),
+                    DemonDownTpLocation.getBlockX() - 1,
+                    DemonDownTpLocation.getBlockZ() - 1,
+                    DemonDownTpLocation.getBlockX() + 1,
+                    DemonDownTpLocation.getBlockZ() + 1)) {
                 player.teleport(DemonHightTpLocation.add(0, 1, 2));
-            } else if (isSameLocation(player.getLocation(), DemonHightTpLocation)) {
-                player.teleport(DemonDownTpLocation.add(0, 1, 2));
+            } else if (isInCube(player.getLocation(),
+                    DemonHightTpLocation.getBlockX() - 1,
+                    DemonHightTpLocation.getBlockZ() - 1,
+                    DemonHightTpLocation.getBlockX() + 1,
+                    DemonHightTpLocation.getBlockZ() + 1)) {
+                player.teleport(DemonDownTpLocation.add(0, 1, -2));
             }
         }
     }
 
-    // Méthode pour comparer les coordonnées arrondies
-    private boolean isSameLocation(Location loc1, Location loc2) {
-        return loc1.getWorld().equals(loc2.getWorld()) &&
-                Math.round(loc1.getX()) == Math.round(loc2.getX()) &&
-                Math.round(loc1.getY()) == Math.round(loc2.getY()) &&
-                Math.round(loc1.getZ()) == Math.round(loc2.getZ());
+    private boolean isInCube(Location location, int x1, int z1, int x2, int z2) {
+        // Obtenez les coordonnées de la location
+        int locX = location.getBlockX();
+        int locZ = location.getBlockZ();
+
+        // Déterminez les limites du cube
+        int minX = Math.min(x1, x2);
+        int maxX = Math.max(x1, x2);
+        int minZ = Math.min(z1, z2);
+        int maxZ = Math.max(z1, z2);
+
+        // Vérifiez si la location est à l'intérieur des limites du cube
+        return (locX >= minX && locX <= maxX) && (locZ >= minZ && locZ <= maxZ);
     }
 }
